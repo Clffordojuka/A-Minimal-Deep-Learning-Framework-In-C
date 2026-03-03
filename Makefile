@@ -12,24 +12,32 @@ SRC_DIR = src
 EXAMPLE_DIR = examples
 BUILD_DIR = build
 
-# Files
-SRC = $(SRC_DIR)/tensor.c
-OBJ = $(BUILD_DIR)/tensor.o
+# Source files
+SRC = $(SRC_DIR)/tensor.c $(SRC_DIR)/layers.c
 
+# Object files
+OBJ = $(BUILD_DIR)/tensor.o $(BUILD_DIR)/layers.o
+
+# Static library
 LIB = $(BUILD_DIR)/libtinyml.a
 
-EXAMPLE = $(BUILD_DIR)/test_tensor
+# Example executable
+EXAMPLE = $(BUILD_DIR)/test_layer
 
 # Default target
 all: $(LIB) example
 
-# Create build folder
+# Create build directory (Windows safe)
 $(BUILD_DIR):
 	if not exist $(BUILD_DIR) mkdir $(BUILD_DIR)
 
-# Compile object files
-$(BUILD_DIR)/tensor.o: $(SRC) | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $(SRC) -o $@
+# Compile tensor object
+$(BUILD_DIR)/tensor.o: $(SRC_DIR)/tensor.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $(SRC_DIR)/tensor.c -o $(BUILD_DIR)/tensor.o
+
+# Compile layers object
+$(BUILD_DIR)/layers.o: $(SRC_DIR)/layers.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $(SRC_DIR)/layers.c -o $(BUILD_DIR)/layers.o
 
 # Create static library
 $(LIB): $(OBJ)
@@ -37,7 +45,7 @@ $(LIB): $(OBJ)
 
 # Build example program
 example: $(LIB)
-	$(CC) $(CFLAGS) $(EXAMPLE_DIR)/test_tensor.c -L$(BUILD_DIR) -ltinyml $(LDFLAGS) -o $(EXAMPLE)
+	$(CC) $(CFLAGS) $(EXAMPLE_DIR)/test_layer.c -L$(BUILD_DIR) -ltinyml $(LDFLAGS) -o $(EXAMPLE)
 
 # Run example
 run: example

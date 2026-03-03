@@ -52,4 +52,43 @@ Utilities
 void tensor_random(Tensor *t);
 void tensor_print(Tensor *t);
 
+/*
+================================================
+NEURAL NETWORK LAYERS
+================================================
+*/
+
+/*
+------------------------------------
+Dense (Fully Connected) Layer
+------------------------------------
+*/
+
+typedef struct {
+
+    Tensor weights;
+    Tensor bias;
+
+    Tensor input;     // saved input for backprop
+    Tensor z;         // pre-activation
+    Tensor output;    // activation output
+
+} DenseLayer;
+
+/*
+------------------------------------
+Layer API
+------------------------------------
+*/
+
+DenseLayer dense_create(int input_size, int output_size);
+
+Tensor dense_forward(DenseLayer *layer, Tensor *input);
+
+Tensor dense_backward(DenseLayer *layer,
+                      Tensor *grad_output,
+                      double learning_rate);
+
+void dense_free(DenseLayer *layer);
+
 #endif
