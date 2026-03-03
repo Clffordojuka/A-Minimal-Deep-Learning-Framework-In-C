@@ -13,16 +13,16 @@ EXAMPLE_DIR = examples
 BUILD_DIR = build
 
 # Source files
-SRC = $(SRC_DIR)/tensor.c $(SRC_DIR)/layers.c
+SRC = $(SRC_DIR)/tensor.c $(SRC_DIR)/layers.c $(SRC_DIR)/network.c
 
 # Object files
-OBJ = $(BUILD_DIR)/tensor.o $(BUILD_DIR)/layers.o
+OBJ = $(BUILD_DIR)/tensor.o $(BUILD_DIR)/layers.o $(BUILD_DIR)/network.o
 
 # Static library
 LIB = $(BUILD_DIR)/libtinyml.a
 
 # Example executable
-EXAMPLE = $(BUILD_DIR)/test_layer
+EXAMPLE = $(BUILD_DIR)/test_network
 
 # Default target
 all: $(LIB) example
@@ -38,6 +38,10 @@ $(BUILD_DIR)/tensor.o: $(SRC_DIR)/tensor.c | $(BUILD_DIR)
 # Compile layers object
 $(BUILD_DIR)/layers.o: $(SRC_DIR)/layers.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $(SRC_DIR)/layers.c -o $(BUILD_DIR)/layers.o
+
+# Compile network object
+$(BUILD_DIR)/network.o: $(SRC_DIR)/network.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $(SRC_DIR)/network.c -o $(BUILD_DIR)/network.o
 
 # Create static library
 $(LIB): $(OBJ)

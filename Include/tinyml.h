@@ -1,6 +1,8 @@
 #ifndef TINYML_H
 #define TINYML_H
 
+#define MAX_LAYERS 32
+
 #include <stdlib.h>
 
 /*
@@ -90,5 +92,37 @@ Tensor dense_backward(DenseLayer *layer,
                       double learning_rate);
 
 void dense_free(DenseLayer *layer);
+
+/*
+====================================
+NEURAL NETWORK
+====================================
+*/
+
+typedef struct {
+
+    int num_layers;
+    DenseLayer layers[MAX_LAYERS];
+
+} NeuralNetwork;
+
+
+/*
+------------------------------------
+Network API
+------------------------------------
+*/
+
+void network_init(NeuralNetwork *net);
+
+void network_add(NeuralNetwork *net, DenseLayer layer);
+
+Tensor network_forward(NeuralNetwork *net, Tensor *input);
+
+void network_backward(NeuralNetwork *net,
+                      Tensor *grad,
+                      double learning_rate);
+
+void network_free(NeuralNetwork *net);
 
 #endif
