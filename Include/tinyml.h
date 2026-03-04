@@ -4,6 +4,7 @@
 #define MAX_LAYERS 32
 
 #include <stdlib.h>
+#include <stdio.h>
 
 /*
 ====================================
@@ -35,6 +36,7 @@ Basic Operations
 Tensor tensor_matmul(Tensor *a, Tensor *b);
 Tensor tensor_add(Tensor *a, Tensor *b);
 Tensor tensor_add_bias(Tensor *a, Tensor *bias);
+Tensor tensor_transpose(Tensor *t);
 
 /*
 ------------------------------------
@@ -61,20 +63,14 @@ NEURAL NETWORK LAYERS
 ================================================
 */
 
-/*
-------------------------------------
-Dense (Fully Connected) Layer
-------------------------------------
-*/
-
 typedef struct {
 
     Tensor weights;
     Tensor bias;
 
-    Tensor input;     // saved input for backprop
-    Tensor z;         // pre-activation
-    Tensor output;    // activation output
+    Tensor input;
+    Tensor z;
+    Tensor output;
 
 } DenseLayer;
 
@@ -133,12 +129,6 @@ OPTIMIZERS
 ================================================
 */
 
-/*
-------------------------------------
-SGD Optimizer
-------------------------------------
-*/
-
 typedef struct {
 
     double learning_rate;
@@ -153,14 +143,76 @@ Optimizer API
 
 SGD sgd_create(double learning_rate);
 
-/*
-Apply SGD update:
-
-param = param - lr * gradient
-*/
-
 void sgd_update(Tensor *param,
                 Tensor *grad,
                 SGD *opt);
+
+
+/*
+================================================
+DATASET
+================================================
+*/
+
+typedef struct {
+
+    Tensor X;
+    Tensor y;
+
+    int num_samples;
+    int num_features;
+
+} Dataset;
+
+/*
+------------------------------------
+Dataset API
+------------------------------------
+*/
+
+Dataset dataset_create(int samples, int features);
+
+void dataset_free(Dataset *ds);
+
+Dataset dataset_load_csv(const char *filename,
+                         int num_samples,
+                         int num_features);
+
+void dataset_shuffle(Dataset *ds);
+
+
+/*
+================================================
+TRAINING ENGINE
+================================================
+*/
+
+typedef struct {
+
+    int epochs;
+    int batch_size;
+    double learning_rate;
+
+} TrainingConfig;
+
+/*
+------------------------------------
+Loss Functions
+------------------------------------
+*/
+
+double mse_loss(Tensor *pred, Tensor *target);
+
+Tensor mse_backward(Tensor *pred, Tensor *target);
+
+/*
+------------------------------------
+Training
+------------------------------------
+*/
+
+void train(NeuralNetwork *net,
+           Dataset *dataset,
+           TrainingConfig config);
 
 #endif

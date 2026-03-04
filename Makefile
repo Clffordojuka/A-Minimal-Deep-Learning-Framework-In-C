@@ -2,7 +2,7 @@
 CC = gcc
 
 # Compiler flags
-CFLAGS = -Iinclude -O2 -Wall -Wextra
+CFLAGS = -Iinclude -g -Wall -Wextra
 
 # Linker flags
 LDFLAGS = -lm
@@ -13,16 +13,16 @@ EXAMPLE_DIR = examples
 BUILD_DIR = build
 
 # Source files
-SRC = $(SRC_DIR)/tensor.c $(SRC_DIR)/layers.c $(SRC_DIR)/network.c $(SRC_DIR)/optimizers.c
+SRC = $(SRC_DIR)/tensor.c $(SRC_DIR)/layers.c $(SRC_DIR)/network.c $(SRC_DIR)/optimizers.c $(SRC_DIR)/dataset.c $(SRC_DIR)/train.c
 
 # Object files
-OBJ = $(BUILD_DIR)/tensor.o $(BUILD_DIR)/layers.o $(BUILD_DIR)/network.o $(BUILD_DIR)/optimizers.o
+OBJ = $(BUILD_DIR)/tensor.o $(BUILD_DIR)/layers.o $(BUILD_DIR)/network.o $(BUILD_DIR)/optimizers.o $(BUILD_DIR)/dataset.o $(BUILD_DIR)/train.o
 
 # Static library
 LIB = $(BUILD_DIR)/libtinyml.a
 
 # Example executable
-EXAMPLE = $(BUILD_DIR)/test_optimizer
+EXAMPLE = $(BUILD_DIR)/train_housing
 
 # Default target
 all: $(LIB) example
@@ -47,13 +47,20 @@ $(BUILD_DIR)/network.o: $(SRC_DIR)/network.c | $(BUILD_DIR)
 $(BUILD_DIR)/optimizers.o: $(SRC_DIR)/optimizers.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $(SRC_DIR)/optimizers.c -o $(BUILD_DIR)/optimizers.o
 
+# Compile dataset object
+$(BUILD_DIR)/dataset.o: $(SRC_DIR)/dataset.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $(SRC_DIR)/dataset.c -o $(BUILD_DIR)/dataset.o
+
+# Compile train object
+$(BUILD_DIR)/train.o: $(SRC_DIR)/train.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $(SRC_DIR)/train.c -o $(BUILD_DIR)/train.o
 # Create static library
 $(LIB): $(OBJ)
 	ar rcs $(LIB) $(OBJ)
 
 # Build example program
 example: $(LIB)
-	$(CC) $(CFLAGS) $(EXAMPLE_DIR)/test_layer.c -L$(BUILD_DIR) -ltinyml $(LDFLAGS) -o $(EXAMPLE)
+	$(CC) $(CFLAGS) $(EXAMPLE_DIR)/train_housing.c -L$(BUILD_DIR) -ltinyml $(LDFLAGS) -o $(EXAMPLE)
 
 # Run example
 run: example
