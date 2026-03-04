@@ -13,16 +13,16 @@ EXAMPLE_DIR = examples
 BUILD_DIR = build
 
 # Source files
-SRC = $(SRC_DIR)/tensor.c $(SRC_DIR)/layers.c $(SRC_DIR)/network.c
+SRC = $(SRC_DIR)/tensor.c $(SRC_DIR)/layers.c $(SRC_DIR)/network.c $(SRC_DIR)/optimizers.c
 
 # Object files
-OBJ = $(BUILD_DIR)/tensor.o $(BUILD_DIR)/layers.o $(BUILD_DIR)/network.o
+OBJ = $(BUILD_DIR)/tensor.o $(BUILD_DIR)/layers.o $(BUILD_DIR)/network.o $(BUILD_DIR)/optimizers.o
 
 # Static library
 LIB = $(BUILD_DIR)/libtinyml.a
 
 # Example executable
-EXAMPLE = $(BUILD_DIR)/test_network
+EXAMPLE = $(BUILD_DIR)/test_optimizer
 
 # Default target
 all: $(LIB) example
@@ -42,6 +42,10 @@ $(BUILD_DIR)/layers.o: $(SRC_DIR)/layers.c | $(BUILD_DIR)
 # Compile network object
 $(BUILD_DIR)/network.o: $(SRC_DIR)/network.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $(SRC_DIR)/network.c -o $(BUILD_DIR)/network.o
+
+# Compile optimizer object
+$(BUILD_DIR)/optimizers.o: $(SRC_DIR)/optimizers.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $(SRC_DIR)/optimizers.c -o $(BUILD_DIR)/optimizers.o
 
 # Create static library
 $(LIB): $(OBJ)

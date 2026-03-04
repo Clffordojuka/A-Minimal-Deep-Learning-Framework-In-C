@@ -6,9 +6,9 @@
 #include <stdlib.h>
 
 /*
-------------------------------------
+====================================
 Tensor Structure
-------------------------------------
+====================================
 */
 
 typedef struct {
@@ -54,6 +54,7 @@ Utilities
 void tensor_random(Tensor *t);
 void tensor_print(Tensor *t);
 
+
 /*
 ================================================
 NEURAL NETWORK LAYERS
@@ -93,6 +94,7 @@ Tensor dense_backward(DenseLayer *layer,
 
 void dense_free(DenseLayer *layer);
 
+
 /*
 ====================================
 NEURAL NETWORK
@@ -105,7 +107,6 @@ typedef struct {
     DenseLayer layers[MAX_LAYERS];
 
 } NeuralNetwork;
-
 
 /*
 ------------------------------------
@@ -124,5 +125,42 @@ void network_backward(NeuralNetwork *net,
                       double learning_rate);
 
 void network_free(NeuralNetwork *net);
+
+
+/*
+================================================
+OPTIMIZERS
+================================================
+*/
+
+/*
+------------------------------------
+SGD Optimizer
+------------------------------------
+*/
+
+typedef struct {
+
+    double learning_rate;
+
+} SGD;
+
+/*
+------------------------------------
+Optimizer API
+------------------------------------
+*/
+
+SGD sgd_create(double learning_rate);
+
+/*
+Apply SGD update:
+
+param = param - lr * gradient
+*/
+
+void sgd_update(Tensor *param,
+                Tensor *grad,
+                SGD *opt);
 
 #endif
