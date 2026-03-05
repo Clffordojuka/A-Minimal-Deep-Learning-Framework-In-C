@@ -3,8 +3,13 @@
 
 int main()
 {
-    Dataset ds =
-        dataset_load_csv("data/housing.csv", 20640, 8);
+   Dataset ds = dataset_load_csv(
+    "data/housing.csv",
+    20640,
+    8
+);
+
+dataset_normalize(&ds);
 
     printf("Loaded dataset: %d samples\n",
            ds.num_samples);
@@ -19,7 +24,7 @@ int main()
     TrainingConfig config;
 
     config.epochs = 5;
-    config.learning_rate = 0.001;
+    config.learning_rate = 0.00001;
 
     train(&net, &ds, config);
 

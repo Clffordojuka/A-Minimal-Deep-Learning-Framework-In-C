@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
 #include "../include/tinyml.h"
 
 /*
@@ -135,6 +136,58 @@ Dataset dataset_load_csv(const char *filename,
     }
 
     return ds;
+}
+
+/*
+------------------------------------
+Normalize Dataset (Standardization)
+------------------------------------
+*/
+
+void dataset_normalize(Dataset *ds)
+{
+    printf("Normalizing dataset...\n");
+
+    for(int j = 0; j < ds->num_features; j++)
+    {
+        double mean = 0.0;
+        double std = 0.0;
+
+        /* compute mean */
+        for(int i = 0; i < ds->num_samples; i++)
+        {
+            mean += ds->X.data[i * ds->num_features + j];
+        }
+
+        mean /= ds->num_samples;
+
+        /* compute variance */
+        for(int i = 0; i < ds->num_samples; i++)
+        {
+            double val = ds->X.data[i * ds->num_features + j];
+            std += (val - mean) * (val - mean);
+        }
+
+        std = sqrt(std / ds->num_samples);
+
+        /* avoid division by zero */
+        if(std == 0)
+            std = 1;
+
+        /* normalize column */
+        for(int i = 0; i < ds->num_samples; i++)
+        {
+            int idx = i * ds->num_features + j;
+
+            ds->X.data[idx] =
+                (ds->X.data[idx] - mean) / std;
+        }
+
+        printf("Feature %d normalized (mean=%.3f std=%.3f)\n",
+               j, mean, std);
+    }
+
+    printf("Dataset normalization complete\n");
 }
 
 /*

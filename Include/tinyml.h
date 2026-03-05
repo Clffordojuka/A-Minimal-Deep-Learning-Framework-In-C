@@ -180,6 +180,14 @@ Dataset dataset_load_csv(const char *filename,
 
 void dataset_shuffle(Dataset *ds);
 
+/*
+------------------------------------
+Dataset Preprocessing
+------------------------------------
+*/
+
+void dataset_normalize(Dataset *ds);
+
 
 /*
 ================================================
