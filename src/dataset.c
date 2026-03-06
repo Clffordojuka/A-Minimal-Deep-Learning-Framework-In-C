@@ -148,12 +148,12 @@ void dataset_normalize(Dataset *ds)
 {
     printf("Normalizing dataset...\n");
 
+    /* Normalize features */
     for(int j = 0; j < ds->num_features; j++)
     {
         double mean = 0.0;
         double std = 0.0;
 
-        /* compute mean */
         for(int i = 0; i < ds->num_samples; i++)
         {
             mean += ds->X.data[i * ds->num_features + j];
@@ -161,7 +161,6 @@ void dataset_normalize(Dataset *ds)
 
         mean /= ds->num_samples;
 
-        /* compute variance */
         for(int i = 0; i < ds->num_samples; i++)
         {
             double val = ds->X.data[i * ds->num_features + j];
@@ -170,11 +169,9 @@ void dataset_normalize(Dataset *ds)
 
         std = sqrt(std / ds->num_samples);
 
-        /* avoid division by zero */
         if(std == 0)
             std = 1;
 
-        /* normalize column */
         for(int i = 0; i < ds->num_samples; i++)
         {
             int idx = i * ds->num_features + j;
@@ -186,6 +183,33 @@ void dataset_normalize(Dataset *ds)
         printf("Feature %d normalized (mean=%.3f std=%.3f)\n",
                j, mean, std);
     }
+
+    /* Normalize target */
+    double mean = 0;
+    double std = 0;
+
+    for(int i=0;i<ds->num_samples;i++)
+        mean += ds->y.data[i];
+
+    mean /= ds->num_samples;
+
+    for(int i=0;i<ds->num_samples;i++)
+    {
+        double v = ds->y.data[i];
+        std += (v - mean)*(v - mean);
+    }
+
+    std = sqrt(std / ds->num_samples);
+
+    if(std == 0)
+        std = 1;
+
+    for(int i=0;i<ds->num_samples;i++)
+        ds->y.data[i] =
+            (ds->y.data[i] - mean) / std;
+
+    printf("Target normalized (mean=%.3f std=%.3f)\n",
+           mean, std);
 
     printf("Dataset normalization complete\n");
 }
@@ -216,4 +240,60 @@ void dataset_shuffle(Dataset *ds)
         ds->y.data[i] = ds->y.data[j];
         ds->y.data[j] = tmpy;
     }
+}
+
+/*
+====================================
+Dataset Split
+====================================
+*/
+
+void dataset_split(Dataset *full,
+                   Dataset *train,
+                   Dataset *test,
+                   double train_ratio)
+{
+    int train_samples =
+        (int)(full->num_samples * train_ratio);
+
+    int test_samples =
+        full->num_samples - train_samples;
+
+    *train = dataset_create(train_samples,
+                            full->num_features);
+
+    *test = dataset_create(test_samples,
+                           full->num_features);
+
+    /* Copy training data */
+
+    for (int i = 0; i < train_samples; i++)
+    {
+        for (int j = 0; j < full->num_features; j++)
+        {
+            train->X.data[i * full->num_features + j] =
+                full->X.data[i * full->num_features + j];
+        }
+
+        train->y.data[i] = full->y.data[i];
+    }
+
+    /* Copy test data */
+
+    for (int i = 0; i < test_samples; i++)
+    {
+        for (int j = 0; j < full->num_features; j++)
+        {
+            test->X.data[i * full->num_features + j] =
+                full->X.data[(train_samples + i)
+                             * full->num_features + j];
+        }
+
+        test->y.data[i] =
+            full->y.data[train_samples + i];
+    }
+
+    printf("Dataset split complete\n");
+    printf("Train samples: %d\n", train_samples);
+    printf("Test samples: %d\n", test_samples);
 }

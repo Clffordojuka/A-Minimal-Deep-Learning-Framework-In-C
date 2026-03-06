@@ -190,6 +190,31 @@ void dataset_normalize(Dataset *ds);
 
 
 /*
+------------------------------------
+Dataset Split
+------------------------------------
+*/
+
+void dataset_split(Dataset *full,
+                   Dataset *train,
+                   Dataset *test,
+                   double train_ratio);
+
+
+/*
+------------------------------------
+Evaluation
+------------------------------------
+*/
+
+double evaluate_mse(NeuralNetwork *net,
+                    Dataset *dataset);
+
+double evaluate_rmse(NeuralNetwork *net,
+                     Dataset *dataset);
+
+
+/*
 ================================================
 TRAINING ENGINE
 ================================================

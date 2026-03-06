@@ -54,6 +54,7 @@ $(BUILD_DIR)/dataset.o: $(SRC_DIR)/dataset.c | $(BUILD_DIR)
 # Compile train object
 $(BUILD_DIR)/train.o: $(SRC_DIR)/train.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $(SRC_DIR)/train.c -o $(BUILD_DIR)/train.o
+
 # Create static library
 $(LIB): $(OBJ)
 	ar rcs $(LIB) $(OBJ)

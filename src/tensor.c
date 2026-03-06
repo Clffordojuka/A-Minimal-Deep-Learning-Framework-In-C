@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <math.h>
+#include <stdlib.h>
 #include <time.h>
 #include "../include/tinyml.h"
 
@@ -17,6 +18,12 @@ Tensor tensor_create(int rows, int cols)
     t.cols = cols;
 
     t.data = (double*)malloc(sizeof(double) * rows * cols);
+
+    if (!t.data)
+    {
+        printf("Tensor allocation failed\n");
+        exit(1);
+    }
 
     return t;
 }
@@ -38,16 +45,26 @@ void tensor_free(Tensor *t)
 
 /*
 ------------------------------------
-Random Initialization
+Xavier Random Initialization
 ------------------------------------
 */
 
 void tensor_random(Tensor *t)
 {
+    static int seeded = 0;
+
+    if (!seeded)
+    {
+        srand((unsigned int)time(NULL));
+        seeded = 1;
+    }
+
+    double limit = sqrt(6.0 / (t->rows + t->cols));
+
     for (int i = 0; i < t->rows * t->cols; i++)
     {
-        t->data[i] =
-            ((double)rand() / RAND_MAX) - 0.5;
+        double r = (double)rand() / RAND_MAX;
+        t->data[i] = (2.0 * r - 1.0) * limit;
     }
 }
 
@@ -92,8 +109,7 @@ Tensor tensor_add(Tensor *a, Tensor *b)
 
     for (int i = 0; i < a->rows * a->cols; i++)
     {
-        out.data[i] =
-            a->data[i] + b->data[i];
+        out.data[i] = a->data[i] + b->data[i];
     }
 
     return out;
@@ -191,8 +207,7 @@ void tensor_print(Tensor *t)
     {
         for (int j = 0; j < t->cols; j++)
         {
-            printf("%.4f ",
-                   t->data[i * t->cols + j]);
+            printf("%.4f ", t->data[i * t->cols + j]);
         }
 
         printf("\n");

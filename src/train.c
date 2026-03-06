@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include "../include/tinyml.h"
 
 /*
@@ -120,4 +121,57 @@ void train(NeuralNetwork *net,
     tensor_free(&target);
 
     printf("Training finished\n");
+}
+
+/*
+====================================
+Evaluation - MSE
+====================================
+*/
+
+double evaluate_mse(NeuralNetwork *net,
+                    Dataset *dataset)
+{
+    int samples = dataset->num_samples;
+    int features = dataset->num_features;
+
+    Tensor input = tensor_create(1, features);
+
+    double total_loss = 0;
+
+    for (int i = 0; i < samples; i++)
+    {
+        for (int j = 0; j < features; j++)
+            input.data[j] =
+                dataset->X.data[i * features + j];
+
+        Tensor pred = network_forward(net, &input);
+
+        double diff =
+            pred.data[0] - dataset->y.data[i];
+
+        total_loss += diff * diff;
+
+        tensor_free(&pred);
+    }
+
+    tensor_free(&input);
+
+    return total_loss / samples;
+}
+
+
+/*
+====================================
+Evaluation - RMSE
+====================================
+*/
+
+double evaluate_rmse(NeuralNetwork *net,
+                     Dataset *dataset)
+{
+    double mse =
+        evaluate_mse(net, dataset);
+
+    return sqrt(mse);
 }
