@@ -22,8 +22,12 @@ int main()
 
     network_init(&net);
 
+    /* deeper architecture */
     network_add(&net,
-        dense_create(8, 16));
+        dense_create(8, 32));
+
+    network_add(&net,
+        dense_create(32, 16));
 
     network_add(&net,
         dense_create(16, 1));
