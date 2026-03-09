@@ -105,35 +105,41 @@ Tensor dense_backward(DenseLayer *layer,
 
 /*
 ------------------------------------
-Apply accumulated gradients (SGD)
+Apply accumulated gradients (SGD + L2)
 ------------------------------------
 */
 
 void dense_apply_gradients(DenseLayer *layer,
                            double learning_rate,
-                           int batch_size)
+                           int batch_size,
+                           double l2_lambda)
 {
     int weight_size =
         layer->weights.rows * layer->weights.cols;
 
     for (int i = 0; i < weight_size; i++)
     {
+        double grad =
+            (layer->grad_weights.data[i] / batch_size) +
+            (l2_lambda * layer->weights.data[i]);
+
         layer->weights.data[i] -=
-            learning_rate *
-            (layer->grad_weights.data[i] / batch_size);
+            learning_rate * grad;
     }
 
     for (int i = 0; i < layer->bias.cols; i++)
     {
+        double grad =
+            layer->grad_bias.data[i] / batch_size;
+
         layer->bias.data[i] -=
-            learning_rate *
-            (layer->grad_bias.data[i] / batch_size);
+            learning_rate * grad;
     }
 }
 
 /*
 ------------------------------------
-Apply accumulated gradients (Adam)
+Apply accumulated gradients (Adam + L2)
 ------------------------------------
 */
 
@@ -143,14 +149,17 @@ void dense_apply_gradients_adam(DenseLayer *layer,
                                 double beta2,
                                 double epsilon,
                                 int timestep,
-                                int batch_size)
+                                int batch_size,
+                                double l2_lambda)
 {
     int weight_size =
         layer->weights.rows * layer->weights.cols;
 
     for (int i = 0; i < weight_size; i++)
     {
-        double g = layer->grad_weights.data[i] / batch_size;
+        double g =
+            (layer->grad_weights.data[i] / batch_size) +
+            (l2_lambda * layer->weights.data[i]);
 
         layer->m_weights.data[i] =
             beta1 * layer->m_weights.data[i] +
@@ -175,7 +184,8 @@ void dense_apply_gradients_adam(DenseLayer *layer,
 
     for (int i = 0; i < layer->bias.cols; i++)
     {
-        double g = layer->grad_bias.data[i] / batch_size;
+        double g =
+            layer->grad_bias.data[i] / batch_size;
 
         layer->m_bias.data[i] =
             beta1 * layer->m_bias.data[i] +

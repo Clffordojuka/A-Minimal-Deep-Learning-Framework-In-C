@@ -100,25 +100,27 @@ void network_backward(NeuralNetwork *net,
 
 /*
 ------------------------------------
-Apply gradients to all layers (SGD)
+Apply gradients to all layers (SGD + L2)
 ------------------------------------
 */
 
 void network_step(NeuralNetwork *net,
                   double learning_rate,
-                  int batch_size)
+                  int batch_size,
+                  double l2_lambda)
 {
     for (int i = 0; i < net->num_layers; i++)
     {
         dense_apply_gradients(&net->layers[i],
                               learning_rate,
-                              batch_size);
+                              batch_size,
+                              l2_lambda);
     }
 }
 
 /*
 ------------------------------------
-Apply gradients to all layers (Adam)
+Apply gradients to all layers (Adam + L2)
 ------------------------------------
 */
 
@@ -128,7 +130,8 @@ void network_step_adam(NeuralNetwork *net,
                        double beta2,
                        double epsilon,
                        int timestep,
-                       int batch_size)
+                       int batch_size,
+                       double l2_lambda)
 {
     for (int i = 0; i < net->num_layers; i++)
     {
@@ -138,7 +141,8 @@ void network_step_adam(NeuralNetwork *net,
                                    beta2,
                                    epsilon,
                                    timestep,
-                                   batch_size);
+                                   batch_size,
+                                   l2_lambda);
     }
 }
 

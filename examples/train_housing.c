@@ -37,6 +37,7 @@ int main()
     config.epochs = 20;
     config.batch_size = 32;
     config.learning_rate = 0.0005;
+    config.l2_lambda = 1e-4;
 
     train(&net, &train_ds, config);
 

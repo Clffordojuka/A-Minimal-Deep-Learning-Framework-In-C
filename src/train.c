@@ -130,8 +130,14 @@ void train(NeuralNetwork *net,
                                   beta2,
                                   epsilon,
                                   timestep,
-                                  batch_count);
-
+                                  batch_count,
+                                  config.l2_lambda);
+                
+                network_step(net,
+                             config.learning_rate,
+                             batch_count,
+                             config.l2_lambda);
+                             
                 network_zero_grad(net);
                 batch_count = 0;
             }

@@ -97,19 +97,21 @@ Tensor dense_forward(DenseLayer *layer, Tensor *input);
 Tensor dense_backward(DenseLayer *layer,
                       Tensor *grad_output);
 
-/* apply accumulated gradients using SGD */
+/* apply accumulated gradients using SGD + L2 */
 void dense_apply_gradients(DenseLayer *layer,
                            double learning_rate,
-                           int batch_size);
+                           int batch_size,
+                           double l2_lambda);
 
-/* apply accumulated gradients using Adam */
+/* apply accumulated gradients using Adam + L2 */
 void dense_apply_gradients_adam(DenseLayer *layer,
                                 double learning_rate,
                                 double beta1,
                                 double beta2,
                                 double epsilon,
                                 int timestep,
-                                int batch_size);
+                                int batch_size,
+                                double l2_lambda);
 
 /* zero gradient buffers */
 void dense_zero_grad(DenseLayer *layer);
@@ -145,19 +147,21 @@ Tensor network_forward(NeuralNetwork *net, Tensor *input);
 void network_backward(NeuralNetwork *net,
                       Tensor *grad);
 
-/* apply gradients to all layers using SGD */
+/* apply gradients to all layers using SGD + L2 */
 void network_step(NeuralNetwork *net,
                   double learning_rate,
-                  int batch_size);
+                  int batch_size,
+                  double l2_lambda);
 
-/* apply gradients to all layers using Adam */
+/* apply gradients to all layers using Adam + L2 */
 void network_step_adam(NeuralNetwork *net,
                        double learning_rate,
                        double beta1,
                        double beta2,
                        double epsilon,
                        int timestep,
-                       int batch_size);
+                       int batch_size,
+                       double l2_lambda);
 
 /* zero gradients for all layers */
 void network_zero_grad(NeuralNetwork *net);
@@ -279,6 +283,7 @@ typedef struct {
     int epochs;
     int batch_size;
     double learning_rate;
+    double l2_lambda;
 
 } TrainingConfig;
 
