@@ -44,18 +44,19 @@ Tensor mse_backward(Tensor *pred, Tensor *target)
 
 /*
 ====================================
-Training Loop (Mini-batch + Adam)
+Training Loop (Mini-batch + Adam + Early Stopping)
 ====================================
 */
 
 void train(NeuralNetwork *net,
-           Dataset *dataset,
+           Dataset *train_dataset,
+           Dataset *val_dataset,
            TrainingConfig config)
 {
     printf("Training started\n");
 
-    int samples = dataset->num_samples;
-    int features = dataset->num_features;
+    int samples = train_dataset->num_samples;
+    int features = train_dataset->num_features;
     int batch_size = config.batch_size;
 
     if (batch_size <= 0)
@@ -64,7 +65,7 @@ void train(NeuralNetwork *net,
         batch_size = 1;
     }
 
-    printf("Samples: %d\n", samples);
+    printf("Train Samples: %d\n", samples);
     printf("Features: %d\n", features);
     printf("Batch size: %d\n", batch_size);
 
@@ -77,11 +78,14 @@ void train(NeuralNetwork *net,
     Tensor input = tensor_create(1, features);
     Tensor target = tensor_create(1, 1);
 
+    double best_val_mse = 1e30;
+    int epochs_without_improvement = 0;
+
     for (int epoch = 0; epoch < config.epochs; epoch++)
     {
         printf("Epoch %d started\n", epoch);
 
-        dataset_shuffle(dataset);
+        dataset_shuffle(train_dataset);
 
         double epoch_loss = 0.0;
         int batch_count = 0;
@@ -93,10 +97,10 @@ void train(NeuralNetwork *net,
             for (int j = 0; j < features; j++)
             {
                 input.data[j] =
-                    dataset->X.data[i * features + j];
+                    train_dataset->X.data[i * features + j];
             }
 
-            target.data[0] = dataset->y.data[i];
+            target.data[0] = train_dataset->y.data[i];
 
             Tensor pred = network_forward(net, &input);
 
@@ -132,12 +136,7 @@ void train(NeuralNetwork *net,
                                   timestep,
                                   batch_count,
                                   config.l2_lambda);
-                
-                network_step(net,
-                             config.learning_rate,
-                             batch_count,
-                             config.l2_lambda);
-                             
+
                 network_zero_grad(net);
                 batch_count = 0;
             }
@@ -148,9 +147,40 @@ void train(NeuralNetwork *net,
             }
         }
 
-        printf("Epoch %d | Loss %.6f\n",
+        double train_loss = epoch_loss / samples;
+        double val_mse = evaluate_mse(net, val_dataset);
+        double val_rmse = sqrt(val_mse);
+
+        printf("Epoch %d | Train Loss %.6f | Val MSE %.6f | Val RMSE %.6f\n",
                epoch,
-               epoch_loss / samples);
+               train_loss,
+               val_mse,
+               val_rmse);
+
+        /* checkpoint best model */
+        if (val_mse < best_val_mse)
+        {
+            best_val_mse = val_mse;
+            epochs_without_improvement = 0;
+
+            if (config.checkpoint_path != NULL)
+            {
+                network_save(net, config.checkpoint_path);
+                printf("New best model saved: %s\n", config.checkpoint_path);
+            }
+        }
+        else
+        {
+            epochs_without_improvement++;
+        }
+
+        /* early stopping */
+        if (config.early_stopping_patience > 0 &&
+            epochs_without_improvement >= config.early_stopping_patience)
+        {
+            printf("Early stopping triggered at epoch %d\n", epoch);
+            break;
+        }
     }
 
     tensor_free(&input);

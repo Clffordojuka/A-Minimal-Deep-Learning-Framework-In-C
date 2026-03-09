@@ -166,6 +166,10 @@ void network_step_adam(NeuralNetwork *net,
 /* zero gradients for all layers */
 void network_zero_grad(NeuralNetwork *net);
 
+/* save / load trained weights */
+void network_save(NeuralNetwork *net, const char *filename);
+void network_load(NeuralNetwork *net, const char *filename);
+
 void network_free(NeuralNetwork *net);
 
 /*
@@ -285,6 +289,9 @@ typedef struct {
     double learning_rate;
     double l2_lambda;
 
+    int early_stopping_patience;
+    const char *checkpoint_path;
+
 } TrainingConfig;
 
 /*
@@ -304,7 +311,8 @@ Training
 */
 
 void train(NeuralNetwork *net,
-           Dataset *dataset,
+           Dataset *train_dataset,
+           Dataset *val_dataset,
            TrainingConfig config);
 
 #endif

@@ -19,29 +19,29 @@ int main()
                   0.8);
 
     NeuralNetwork net;
-
     network_init(&net);
 
-    /* deeper architecture */
     network_add(&net,
         dense_create(8, 32));
-
     network_add(&net,
         dense_create(32, 16));
-
     network_add(&net,
         dense_create(16, 1));
 
     TrainingConfig config;
-
     config.epochs = 20;
     config.batch_size = 32;
     config.learning_rate = 0.0005;
     config.l2_lambda = 1e-4;
+    config.early_stopping_patience = 5;
+    config.checkpoint_path = "best_housing_model.bin";
 
-    train(&net, &train_ds, config);
+    train(&net, &train_ds, &test_ds, config);
 
-    printf("\nEvaluating model...\n");
+    printf("\nLoading best checkpoint...\n");
+    network_load(&net, "best_housing_model.bin");
+
+    printf("\nEvaluating best model...\n");
 
     double mse =
         evaluate_mse(&net, &test_ds);
@@ -49,8 +49,11 @@ int main()
     double rmse =
         evaluate_rmse(&net, &test_ds);
 
-    printf("Test MSE: %.6f\n", mse);
-    printf("Test RMSE: %.6f\n", rmse);
+    printf("Best Test MSE: %.6f\n", mse);
+    printf("Best Test RMSE: %.6f\n", rmse);
+
+    /* optional final export */
+    network_save(&net, "housing_model.bin");
 
     dataset_free(&full);
     dataset_free(&train_ds);

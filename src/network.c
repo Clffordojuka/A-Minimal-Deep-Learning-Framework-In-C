@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "../include/tinyml.h"
 
 /*
@@ -158,6 +159,112 @@ void network_zero_grad(NeuralNetwork *net)
     {
         dense_zero_grad(&net->layers[i]);
     }
+}
+
+/*
+------------------------------------
+Save Model
+------------------------------------
+*/
+
+void network_save(NeuralNetwork *net, const char *filename)
+{
+    FILE *fp = fopen(filename, "wb");
+
+    if (fp == NULL)
+    {
+        printf("Error: could not open file for saving: %s\n", filename);
+        exit(1);
+    }
+
+    fwrite(&net->num_layers, sizeof(int), 1, fp);
+
+    for (int i = 0; i < net->num_layers; i++)
+    {
+        DenseLayer *layer = &net->layers[i];
+
+        fwrite(&layer->weights.rows, sizeof(int), 1, fp);
+        fwrite(&layer->weights.cols, sizeof(int), 1, fp);
+
+        fwrite(layer->weights.data,
+               sizeof(double),
+               layer->weights.rows * layer->weights.cols,
+               fp);
+
+        fwrite(layer->bias.data,
+               sizeof(double),
+               layer->bias.cols,
+               fp);
+    }
+
+    fclose(fp);
+
+    printf("Model saved to %s\n", filename);
+}
+
+/*
+------------------------------------
+Load Model
+------------------------------------
+*/
+
+void network_load(NeuralNetwork *net, const char *filename)
+{
+    FILE *fp = fopen(filename, "rb");
+
+    if (fp == NULL)
+    {
+        printf("Error: could not open file for loading: %s\n", filename);
+        exit(1);
+    }
+
+    int saved_num_layers = 0;
+    fread(&saved_num_layers, sizeof(int), 1, fp);
+
+    if (saved_num_layers != net->num_layers)
+    {
+        printf("Error: model layer count mismatch\n");
+        printf("Saved model layers: %d, current network layers: %d\n",
+               saved_num_layers, net->num_layers);
+        fclose(fp);
+        exit(1);
+    }
+
+    for (int i = 0; i < net->num_layers; i++)
+    {
+        DenseLayer *layer = &net->layers[i];
+
+        int saved_rows = 0;
+        int saved_cols = 0;
+
+        fread(&saved_rows, sizeof(int), 1, fp);
+        fread(&saved_cols, sizeof(int), 1, fp);
+
+        if (saved_rows != layer->weights.rows ||
+            saved_cols != layer->weights.cols)
+        {
+            printf("Error: layer %d shape mismatch while loading\n", i);
+            printf("Saved: (%d x %d), Current: (%d x %d)\n",
+                   saved_rows, saved_cols,
+                   layer->weights.rows, layer->weights.cols);
+            fclose(fp);
+            exit(1);
+        }
+
+        fread(layer->weights.data,
+              sizeof(double),
+              layer->weights.rows * layer->weights.cols,
+              fp);
+
+        fread(layer->bias.data,
+              sizeof(double),
+              layer->bias.cols,
+              fp);
+    }
+
+    fclose(fp);
+
+    printf("Model loaded from %s\n", filename);
 }
 
 /*
