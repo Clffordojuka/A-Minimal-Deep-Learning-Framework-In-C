@@ -76,6 +76,14 @@ Matrix Multiplication
 
 Tensor tensor_matmul(Tensor *a, Tensor *b)
 {
+    if (a->cols != b->rows)
+    {
+        printf("ERROR: matmul dimension mismatch: (%d x %d) * (%d x %d)\n",
+               a->rows, a->cols,
+               b->rows, b->cols);
+        exit(1);
+    }
+
     Tensor out = tensor_create(a->rows, b->cols);
 
     for (int i = 0; i < a->rows; i++)

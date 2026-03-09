@@ -37,14 +37,23 @@ Forward Pass
 
 Tensor network_forward(NeuralNetwork *net, Tensor *input)
 {
-    Tensor out = *input;
+    Tensor current = *input;
+    Tensor next;
 
     for (int i = 0; i < net->num_layers; i++)
     {
-        out = dense_forward(&net->layers[i], &out);
+        next = dense_forward(&net->layers[i], &current);
+
+        /* Apply ReLU only on hidden layers */
+        if (i < net->num_layers - 1)
+        {
+            tensor_relu(&next);
+        }
+
+        current = next;
     }
 
-    return out;
+    return current;
 }
 
 /*
@@ -58,10 +67,26 @@ void network_backward(NeuralNetwork *net,
                       double lr)
 {
     Tensor current_grad = *grad;
+    Tensor new_grad;
 
     for (int i = net->num_layers - 1; i >= 0; i--)
     {
-        Tensor new_grad =
+        /* ReLU backward only for hidden layers */
+        if (i < net->num_layers - 1)
+        {
+            Tensor relu_grad =
+                tensor_relu_backward(&current_grad,
+                                     &net->layers[i].z);
+
+            if (i != net->num_layers - 1)
+            {
+                tensor_free(&current_grad);
+            }
+
+            current_grad = relu_grad;
+        }
+
+        new_grad =
             dense_backward(&net->layers[i],
                            &current_grad,
                            lr);

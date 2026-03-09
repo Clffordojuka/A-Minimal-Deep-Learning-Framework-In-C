@@ -73,15 +73,13 @@ void train(NeuralNetwork *net,
 
         for (int i = 0; i < samples; i++)
         {
-            /* Load sample */
-
             for (int j = 0; j < features; j++)
+            {
                 input.data[j] =
                     dataset->X.data[i * features + j];
+            }
 
             target.data[0] = dataset->y.data[i];
-
-            /* Forward pass */
 
             Tensor pred = network_forward(net, &input);
 
@@ -91,25 +89,20 @@ void train(NeuralNetwork *net,
                 exit(1);
             }
 
-            /* Loss */
-
             double loss = mse_loss(&pred, &target);
-
             epoch_loss += loss;
-
-            /* Backprop */
 
             Tensor grad = mse_backward(&pred, &target);
 
-            network_backward(net,
-                             &grad,
-                             config.learning_rate);
+            network_backward(net, &grad, config.learning_rate);
 
             tensor_free(&pred);
             tensor_free(&grad);
 
             if (i % 5000 == 0)
+            {
                 printf("Processed sample %d\n", i);
+            }
         }
 
         printf("Epoch %d | Loss %.6f\n",
@@ -142,8 +135,10 @@ double evaluate_mse(NeuralNetwork *net,
     for (int i = 0; i < samples; i++)
     {
         for (int j = 0; j < features; j++)
+        {
             input.data[j] =
                 dataset->X.data[i * features + j];
+        }
 
         Tensor pred = network_forward(net, &input);
 
@@ -160,7 +155,6 @@ double evaluate_mse(NeuralNetwork *net,
     return total_loss / samples;
 }
 
-
 /*
 ====================================
 Evaluation - RMSE
@@ -170,8 +164,6 @@ Evaluation - RMSE
 double evaluate_rmse(NeuralNetwork *net,
                      Dataset *dataset)
 {
-    double mse =
-        evaluate_mse(net, dataset);
-
+    double mse = evaluate_mse(net, dataset);
     return sqrt(mse);
 }
