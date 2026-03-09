@@ -75,6 +75,12 @@ typedef struct {
     Tensor grad_weights;
     Tensor grad_bias;
 
+    /* Adam moment buffers */
+    Tensor m_weights;
+    Tensor v_weights;
+    Tensor m_bias;
+    Tensor v_bias;
+
 } DenseLayer;
 
 /*
@@ -91,10 +97,19 @@ Tensor dense_forward(DenseLayer *layer, Tensor *input);
 Tensor dense_backward(DenseLayer *layer,
                       Tensor *grad_output);
 
-/* apply accumulated gradients */
+/* apply accumulated gradients using SGD */
 void dense_apply_gradients(DenseLayer *layer,
                            double learning_rate,
                            int batch_size);
+
+/* apply accumulated gradients using Adam */
+void dense_apply_gradients_adam(DenseLayer *layer,
+                                double learning_rate,
+                                double beta1,
+                                double beta2,
+                                double epsilon,
+                                int timestep,
+                                int batch_size);
 
 /* zero gradient buffers */
 void dense_zero_grad(DenseLayer *layer);
@@ -130,10 +145,19 @@ Tensor network_forward(NeuralNetwork *net, Tensor *input);
 void network_backward(NeuralNetwork *net,
                       Tensor *grad);
 
-/* apply gradients to all layers */
+/* apply gradients to all layers using SGD */
 void network_step(NeuralNetwork *net,
                   double learning_rate,
                   int batch_size);
+
+/* apply gradients to all layers using Adam */
+void network_step_adam(NeuralNetwork *net,
+                       double learning_rate,
+                       double beta1,
+                       double beta2,
+                       double epsilon,
+                       int timestep,
+                       int batch_size);
 
 /* zero gradients for all layers */
 void network_zero_grad(NeuralNetwork *net);
@@ -147,10 +171,16 @@ OPTIMIZERS
 */
 
 typedef struct {
-
     double learning_rate;
-
 } SGD;
+
+typedef struct {
+    double learning_rate;
+    double beta1;
+    double beta2;
+    double epsilon;
+    int timestep;
+} Adam;
 
 /*
 ------------------------------------
@@ -163,6 +193,17 @@ SGD sgd_create(double learning_rate);
 void sgd_update(Tensor *param,
                 Tensor *grad,
                 SGD *opt);
+
+Adam adam_create(double learning_rate,
+                 double beta1,
+                 double beta2,
+                 double epsilon);
+
+void adam_update(Tensor *param,
+                 Tensor *grad,
+                 Tensor *m,
+                 Tensor *v,
+                 Adam *opt);
 
 /*
 ================================================

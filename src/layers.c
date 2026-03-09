@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
 #include "../include/tinyml.h"
 
 /*
@@ -21,7 +23,26 @@ DenseLayer dense_create(int input_size, int output_size)
     layer.grad_weights = tensor_create(input_size, output_size);
     layer.grad_bias = tensor_create(1, output_size);
 
+    /* Adam moment buffers */
+    layer.m_weights = tensor_create(input_size, output_size);
+    layer.v_weights = tensor_create(input_size, output_size);
+    layer.m_bias = tensor_create(1, output_size);
+    layer.v_bias = tensor_create(1, output_size);
+
     dense_zero_grad(&layer);
+
+    /* zero Adam buffers */
+    for (int i = 0; i < input_size * output_size; i++)
+    {
+        layer.m_weights.data[i] = 0.0;
+        layer.v_weights.data[i] = 0.0;
+    }
+
+    for (int i = 0; i < output_size; i++)
+    {
+        layer.m_bias.data[i] = 0.0;
+        layer.v_bias.data[i] = 0.0;
+    }
 
     return layer;
 }
@@ -59,7 +80,6 @@ Tensor dense_backward(DenseLayer *layer,
     Tensor input_T = tensor_transpose(&layer->input);
     Tensor grad_w = tensor_matmul(&input_T, grad_output);
 
-    /* accumulate weight gradients */
     int weight_size =
         layer->weights.rows * layer->weights.cols;
 
@@ -68,13 +88,11 @@ Tensor dense_backward(DenseLayer *layer,
         layer->grad_weights.data[i] += grad_w.data[i];
     }
 
-    /* accumulate bias gradients */
     for (int i = 0; i < layer->bias.cols; i++)
     {
         layer->grad_bias.data[i] += grad_output->data[i];
     }
 
-    /* propagate gradient to previous layer */
     Tensor weights_T = tensor_transpose(&layer->weights);
     Tensor grad_input = tensor_matmul(grad_output, &weights_T);
 
@@ -87,7 +105,7 @@ Tensor dense_backward(DenseLayer *layer,
 
 /*
 ------------------------------------
-Apply accumulated gradients
+Apply accumulated gradients (SGD)
 ------------------------------------
 */
 
@@ -110,6 +128,74 @@ void dense_apply_gradients(DenseLayer *layer,
         layer->bias.data[i] -=
             learning_rate *
             (layer->grad_bias.data[i] / batch_size);
+    }
+}
+
+/*
+------------------------------------
+Apply accumulated gradients (Adam)
+------------------------------------
+*/
+
+void dense_apply_gradients_adam(DenseLayer *layer,
+                                double learning_rate,
+                                double beta1,
+                                double beta2,
+                                double epsilon,
+                                int timestep,
+                                int batch_size)
+{
+    int weight_size =
+        layer->weights.rows * layer->weights.cols;
+
+    for (int i = 0; i < weight_size; i++)
+    {
+        double g = layer->grad_weights.data[i] / batch_size;
+
+        layer->m_weights.data[i] =
+            beta1 * layer->m_weights.data[i] +
+            (1.0 - beta1) * g;
+
+        layer->v_weights.data[i] =
+            beta2 * layer->v_weights.data[i] +
+            (1.0 - beta2) * g * g;
+
+        double m_hat =
+            layer->m_weights.data[i] /
+            (1.0 - pow(beta1, timestep));
+
+        double v_hat =
+            layer->v_weights.data[i] /
+            (1.0 - pow(beta2, timestep));
+
+        layer->weights.data[i] -=
+            learning_rate *
+            m_hat / (sqrt(v_hat) + epsilon);
+    }
+
+    for (int i = 0; i < layer->bias.cols; i++)
+    {
+        double g = layer->grad_bias.data[i] / batch_size;
+
+        layer->m_bias.data[i] =
+            beta1 * layer->m_bias.data[i] +
+            (1.0 - beta1) * g;
+
+        layer->v_bias.data[i] =
+            beta2 * layer->v_bias.data[i] +
+            (1.0 - beta2) * g * g;
+
+        double m_hat =
+            layer->m_bias.data[i] /
+            (1.0 - pow(beta1, timestep));
+
+        double v_hat =
+            layer->v_bias.data[i] /
+            (1.0 - pow(beta2, timestep));
+
+        layer->bias.data[i] -=
+            learning_rate *
+            m_hat / (sqrt(v_hat) + epsilon);
     }
 }
 
@@ -145,6 +231,12 @@ void dense_free(DenseLayer *layer)
 {
     tensor_free(&layer->weights);
     tensor_free(&layer->bias);
+
     tensor_free(&layer->grad_weights);
     tensor_free(&layer->grad_bias);
+
+    tensor_free(&layer->m_weights);
+    tensor_free(&layer->v_weights);
+    tensor_free(&layer->m_bias);
+    tensor_free(&layer->v_bias);
 }

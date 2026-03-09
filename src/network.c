@@ -44,7 +44,6 @@ Tensor network_forward(NeuralNetwork *net, Tensor *input)
     {
         next = dense_forward(&net->layers[i], &current);
 
-        /* ReLU only on hidden layers */
         if (i < net->num_layers - 1)
         {
             tensor_relu(&next);
@@ -101,7 +100,7 @@ void network_backward(NeuralNetwork *net,
 
 /*
 ------------------------------------
-Apply gradients to all layers
+Apply gradients to all layers (SGD)
 ------------------------------------
 */
 
@@ -114,6 +113,32 @@ void network_step(NeuralNetwork *net,
         dense_apply_gradients(&net->layers[i],
                               learning_rate,
                               batch_size);
+    }
+}
+
+/*
+------------------------------------
+Apply gradients to all layers (Adam)
+------------------------------------
+*/
+
+void network_step_adam(NeuralNetwork *net,
+                       double learning_rate,
+                       double beta1,
+                       double beta2,
+                       double epsilon,
+                       int timestep,
+                       int batch_size)
+{
+    for (int i = 0; i < net->num_layers; i++)
+    {
+        dense_apply_gradients_adam(&net->layers[i],
+                                   learning_rate,
+                                   beta1,
+                                   beta2,
+                                   epsilon,
+                                   timestep,
+                                   batch_size);
     }
 }
 

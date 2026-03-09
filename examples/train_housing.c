@@ -32,7 +32,7 @@ int main()
 
     config.epochs = 20;
     config.batch_size = 32;
-    config.learning_rate = 0.001;
+    config.learning_rate = 0.0005;
 
     train(&net, &train_ds, config);
 

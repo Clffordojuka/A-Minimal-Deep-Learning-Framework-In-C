@@ -44,7 +44,7 @@ Tensor mse_backward(Tensor *pred, Tensor *target)
 
 /*
 ====================================
-Training Loop (Mini-batch ready)
+Training Loop (Mini-batch + Adam)
 ====================================
 */
 
@@ -67,6 +67,12 @@ void train(NeuralNetwork *net,
     printf("Samples: %d\n", samples);
     printf("Features: %d\n", features);
     printf("Batch size: %d\n", batch_size);
+
+    /* Adam hyperparameters */
+    const double beta1 = 0.9;
+    const double beta2 = 0.999;
+    const double epsilon = 1e-8;
+    int timestep = 0;
 
     Tensor input = tensor_create(1, features);
     Tensor target = tensor_create(1, 1);
@@ -116,9 +122,15 @@ void train(NeuralNetwork *net,
             /* apply update at batch boundary or end of epoch */
             if (batch_count == batch_size || i == samples - 1)
             {
-                network_step(net,
-                             config.learning_rate,
-                             batch_count);
+                timestep++;
+
+                network_step_adam(net,
+                                  config.learning_rate,
+                                  beta1,
+                                  beta2,
+                                  epsilon,
+                                  timestep,
+                                  batch_count);
 
                 network_zero_grad(net);
                 batch_count = 0;
