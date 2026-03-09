@@ -30,8 +30,8 @@ int main()
 
     TrainingConfig config;
 
-    config.epochs = 5;
-    config.batch_size = 1;
+    config.epochs = 20;
+    config.batch_size = 32;
     config.learning_rate = 0.001;
 
     train(&net, &train_ds, config);

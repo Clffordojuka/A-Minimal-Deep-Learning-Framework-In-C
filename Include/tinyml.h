@@ -56,7 +56,6 @@ Utilities
 void tensor_random(Tensor *t);
 void tensor_print(Tensor *t);
 
-
 /*
 ================================================
 NEURAL NETWORK LAYERS
@@ -72,6 +71,10 @@ typedef struct {
     Tensor z;
     Tensor output;
 
+    /* batch gradient buffers */
+    Tensor grad_weights;
+    Tensor grad_bias;
+
 } DenseLayer;
 
 /*
@@ -84,12 +87,19 @@ DenseLayer dense_create(int input_size, int output_size);
 
 Tensor dense_forward(DenseLayer *layer, Tensor *input);
 
+/* accumulate gradients only */
 Tensor dense_backward(DenseLayer *layer,
-                      Tensor *grad_output,
-                      double learning_rate);
+                      Tensor *grad_output);
+
+/* apply accumulated gradients */
+void dense_apply_gradients(DenseLayer *layer,
+                           double learning_rate,
+                           int batch_size);
+
+/* zero gradient buffers */
+void dense_zero_grad(DenseLayer *layer);
 
 void dense_free(DenseLayer *layer);
-
 
 /*
 ====================================
@@ -116,12 +126,19 @@ void network_add(NeuralNetwork *net, DenseLayer layer);
 
 Tensor network_forward(NeuralNetwork *net, Tensor *input);
 
+/* accumulate gradients only */
 void network_backward(NeuralNetwork *net,
-                      Tensor *grad,
-                      double learning_rate);
+                      Tensor *grad);
+
+/* apply gradients to all layers */
+void network_step(NeuralNetwork *net,
+                  double learning_rate,
+                  int batch_size);
+
+/* zero gradients for all layers */
+void network_zero_grad(NeuralNetwork *net);
 
 void network_free(NeuralNetwork *net);
-
 
 /*
 ================================================
@@ -146,7 +163,6 @@ SGD sgd_create(double learning_rate);
 void sgd_update(Tensor *param,
                 Tensor *grad,
                 SGD *opt);
-
 
 /*
 ================================================
@@ -188,7 +204,6 @@ Dataset Preprocessing
 
 void dataset_normalize(Dataset *ds);
 
-
 /*
 ------------------------------------
 Dataset Split
@@ -199,7 +214,6 @@ void dataset_split(Dataset *full,
                    Dataset *train,
                    Dataset *test,
                    double train_ratio);
-
 
 /*
 ------------------------------------
@@ -212,7 +226,6 @@ double evaluate_mse(NeuralNetwork *net,
 
 double evaluate_rmse(NeuralNetwork *net,
                      Dataset *dataset);
-
 
 /*
 ================================================

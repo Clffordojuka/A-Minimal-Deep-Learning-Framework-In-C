@@ -44,7 +44,7 @@ Tensor mse_backward(Tensor *pred, Tensor *target)
 
 /*
 ====================================
-Training Loop
+Training Loop (Mini-batch ready)
 ====================================
 */
 
@@ -56,9 +56,17 @@ void train(NeuralNetwork *net,
 
     int samples = dataset->num_samples;
     int features = dataset->num_features;
+    int batch_size = config.batch_size;
+
+    if (batch_size <= 0)
+    {
+        printf("Invalid batch_size. Using 1.\n");
+        batch_size = 1;
+    }
 
     printf("Samples: %d\n", samples);
     printf("Features: %d\n", features);
+    printf("Batch size: %d\n", batch_size);
 
     Tensor input = tensor_create(1, features);
     Tensor target = tensor_create(1, 1);
@@ -69,7 +77,10 @@ void train(NeuralNetwork *net,
 
         dataset_shuffle(dataset);
 
-        double epoch_loss = 0;
+        double epoch_loss = 0.0;
+        int batch_count = 0;
+
+        network_zero_grad(net);
 
         for (int i = 0; i < samples; i++)
         {
@@ -94,10 +105,24 @@ void train(NeuralNetwork *net,
 
             Tensor grad = mse_backward(&pred, &target);
 
-            network_backward(net, &grad, config.learning_rate);
+            /* accumulate gradients only */
+            network_backward(net, &grad);
 
             tensor_free(&pred);
             tensor_free(&grad);
+
+            batch_count++;
+
+            /* apply update at batch boundary or end of epoch */
+            if (batch_count == batch_size || i == samples - 1)
+            {
+                network_step(net,
+                             config.learning_rate,
+                             batch_count);
+
+                network_zero_grad(net);
+                batch_count = 0;
+            }
 
             if (i % 5000 == 0)
             {
@@ -130,7 +155,7 @@ double evaluate_mse(NeuralNetwork *net,
 
     Tensor input = tensor_create(1, features);
 
-    double total_loss = 0;
+    double total_loss = 0.0;
 
     for (int i = 0; i < samples; i++)
     {
