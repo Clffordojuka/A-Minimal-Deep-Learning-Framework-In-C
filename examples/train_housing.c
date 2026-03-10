@@ -8,8 +8,6 @@ int main()
                          20640,
                          8);
 
-    dataset_normalize(&full);
-
     Dataset train_ds;
     Dataset test_ds;
 
@@ -17,6 +15,12 @@ int main()
                   &train_ds,
                   &test_ds,
                   0.8);
+
+    NormalizationStats stats =
+        normalization_stats_create(train_ds.num_features);
+
+    dataset_fit_normalization(&train_ds, &stats);
+    dataset_apply_normalization(&test_ds, &stats);
 
     NeuralNetwork net;
     network_init(&net);
@@ -52,12 +56,32 @@ int main()
     printf("Best Test MSE: %.6f\n", mse);
     printf("Best Test RMSE: %.6f\n", rmse);
 
-    /* optional final export */
     network_save(&net, "housing_model.bin");
+    normalization_stats_save(&stats, "housing_stats.bin");
+
+    /* Example single-sample prediction
+       Feature order:
+       longitude, latitude, housing_median_age, total_rooms,
+       total_bedrooms, population, households, median_income
+    */
+    double sample_house[8] = {
+        -122.23, 37.88, 41.0, 880.0,
+        129.0, 322.0, 126.0, 8.3252
+    };
+
+    double predicted_price =
+        predict_sample(&net,
+                       sample_house,
+                       8,
+                       &stats);
+
+    printf("\nSingle-sample prediction:\n");
+    printf("Predicted house price: $%.2f\n", predicted_price);
 
     dataset_free(&full);
     dataset_free(&train_ds);
     dataset_free(&test_ds);
+    normalization_stats_free(&stats);
 
     network_free(&net);
 

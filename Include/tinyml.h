@@ -93,17 +93,14 @@ DenseLayer dense_create(int input_size, int output_size);
 
 Tensor dense_forward(DenseLayer *layer, Tensor *input);
 
-/* accumulate gradients only */
 Tensor dense_backward(DenseLayer *layer,
                       Tensor *grad_output);
 
-/* apply accumulated gradients using SGD + L2 */
 void dense_apply_gradients(DenseLayer *layer,
                            double learning_rate,
                            int batch_size,
                            double l2_lambda);
 
-/* apply accumulated gradients using Adam + L2 */
 void dense_apply_gradients_adam(DenseLayer *layer,
                                 double learning_rate,
                                 double beta1,
@@ -113,7 +110,6 @@ void dense_apply_gradients_adam(DenseLayer *layer,
                                 int batch_size,
                                 double l2_lambda);
 
-/* zero gradient buffers */
 void dense_zero_grad(DenseLayer *layer);
 
 void dense_free(DenseLayer *layer);
@@ -143,17 +139,14 @@ void network_add(NeuralNetwork *net, DenseLayer layer);
 
 Tensor network_forward(NeuralNetwork *net, Tensor *input);
 
-/* accumulate gradients only */
 void network_backward(NeuralNetwork *net,
                       Tensor *grad);
 
-/* apply gradients to all layers using SGD + L2 */
 void network_step(NeuralNetwork *net,
                   double learning_rate,
                   int batch_size,
                   double l2_lambda);
 
-/* apply gradients to all layers using Adam + L2 */
 void network_step_adam(NeuralNetwork *net,
                        double learning_rate,
                        double beta1,
@@ -163,10 +156,8 @@ void network_step_adam(NeuralNetwork *net,
                        int batch_size,
                        double l2_lambda);
 
-/* zero gradients for all layers */
 void network_zero_grad(NeuralNetwork *net);
 
-/* save / load trained weights */
 void network_save(NeuralNetwork *net, const char *filename);
 void network_load(NeuralNetwork *net, const char *filename);
 
@@ -231,6 +222,20 @@ typedef struct {
 
 /*
 ------------------------------------
+Normalization Statistics
+------------------------------------
+*/
+
+typedef struct {
+    int num_features;
+    double *feature_mean;
+    double *feature_std;
+    double target_mean;
+    double target_std;
+} NormalizationStats;
+
+/*
+------------------------------------
 Dataset API
 ------------------------------------
 */
@@ -245,24 +250,52 @@ Dataset dataset_load_csv(const char *filename,
 
 void dataset_shuffle(Dataset *ds);
 
-/*
-------------------------------------
-Dataset Preprocessing
-------------------------------------
-*/
-
-void dataset_normalize(Dataset *ds);
-
-/*
-------------------------------------
-Dataset Split
-------------------------------------
-*/
-
 void dataset_split(Dataset *full,
                    Dataset *train,
                    Dataset *test,
                    double train_ratio);
+
+/*
+------------------------------------
+Normalization API
+------------------------------------
+*/
+
+NormalizationStats normalization_stats_create(int num_features);
+void normalization_stats_free(NormalizationStats *stats);
+
+void dataset_fit_normalization(Dataset *ds,
+                               NormalizationStats *stats);
+
+void dataset_apply_normalization(Dataset *ds,
+                                 NormalizationStats *stats);
+
+/* backward-compatible helper: fit + apply in one call */
+void dataset_normalize(Dataset *ds);
+
+void normalize_input(double *raw_input,
+                     double *normalized_input,
+                     int num_features,
+                     NormalizationStats *stats);
+
+double denormalize_target(double normalized_value,
+                          NormalizationStats *stats);
+
+void normalization_stats_save(NormalizationStats *stats,
+                              const char *filename);
+
+NormalizationStats normalization_stats_load(const char *filename);
+
+/*
+------------------------------------
+Inference API
+------------------------------------
+*/
+
+double predict_sample(NeuralNetwork *net,
+                      double *raw_features,
+                      int num_features,
+                      NormalizationStats *stats);
 
 /*
 ------------------------------------
