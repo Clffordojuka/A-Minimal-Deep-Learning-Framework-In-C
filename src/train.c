@@ -44,7 +44,7 @@ Tensor mse_backward(Tensor *pred, Tensor *target)
 
 /*
 ====================================
-Training Loop (Mini-batch + Adam + Early Stopping)
+Training Loop (Mini-batch + Adam + Early Stopping + CSV Logging)
 ====================================
 */
 
@@ -68,6 +68,22 @@ void train(NeuralNetwork *net,
     printf("Train Samples: %d\n", samples);
     printf("Features: %d\n", features);
     printf("Batch size: %d\n", batch_size);
+
+    FILE *history_file = NULL;
+
+    if (config.history_path != NULL)
+    {
+        history_file = fopen(config.history_path, "w");
+
+        if (history_file == NULL)
+        {
+            printf("Error: could not open history file: %s\n",
+                   config.history_path);
+            exit(1);
+        }
+
+        fprintf(history_file, "epoch,train_loss,val_mse,val_rmse\n");
+    }
 
     /* Adam hyperparameters */
     const double beta1 = 0.9;
@@ -115,7 +131,6 @@ void train(NeuralNetwork *net,
 
             Tensor grad = mse_backward(&pred, &target);
 
-            /* accumulate gradients only */
             network_backward(net, &grad);
 
             tensor_free(&pred);
@@ -123,7 +138,6 @@ void train(NeuralNetwork *net,
 
             batch_count++;
 
-            /* apply update at batch boundary or end of epoch */
             if (batch_count == batch_size || i == samples - 1)
             {
                 timestep++;
@@ -157,7 +171,17 @@ void train(NeuralNetwork *net,
                val_mse,
                val_rmse);
 
-        /* checkpoint best model */
+        if (history_file != NULL)
+        {
+            fprintf(history_file,
+                    "%d,%.6f,%.6f,%.6f\n",
+                    epoch,
+                    train_loss,
+                    val_mse,
+                    val_rmse);
+            fflush(history_file);
+        }
+
         if (val_mse < best_val_mse)
         {
             best_val_mse = val_mse;
@@ -174,13 +198,18 @@ void train(NeuralNetwork *net,
             epochs_without_improvement++;
         }
 
-        /* early stopping */
         if (config.early_stopping_patience > 0 &&
             epochs_without_improvement >= config.early_stopping_patience)
         {
             printf("Early stopping triggered at epoch %d\n", epoch);
             break;
         }
+    }
+
+    if (history_file != NULL)
+    {
+        fclose(history_file);
+        printf("Training history saved to %s\n", config.history_path);
     }
 
     tensor_free(&input);

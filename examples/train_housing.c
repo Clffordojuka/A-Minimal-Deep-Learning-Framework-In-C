@@ -39,6 +39,7 @@ int main()
     config.l2_lambda = 1e-4;
     config.early_stopping_patience = 5;
     config.checkpoint_path = "best_housing_model.bin";
+    config.history_path = "training_history.csv";
 
     train(&net, &train_ds, &test_ds, config);
 
@@ -59,11 +60,6 @@ int main()
     network_save(&net, "housing_model.bin");
     normalization_stats_save(&stats, "housing_stats.bin");
 
-    /* Example single-sample prediction
-       Feature order:
-       longitude, latitude, housing_median_age, total_rooms,
-       total_bedrooms, population, households, median_income
-    */
     double sample_house[8] = {
         -122.23, 37.88, 41.0, 880.0,
         129.0, 322.0, 126.0, 8.3252

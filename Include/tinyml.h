@@ -324,6 +324,7 @@ typedef struct {
 
     int early_stopping_patience;
     const char *checkpoint_path;
+    const char *history_path;
 
 } TrainingConfig;
 
