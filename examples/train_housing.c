@@ -4,7 +4,7 @@
 int main()
 {
     Dataset full =
-        dataset_load_csv("data/housing.csv",
+        dataset_load_csv("raw/data/housing.csv",
                          20640,
                          8);
 
@@ -38,13 +38,13 @@ int main()
     config.learning_rate = 0.0005;
     config.l2_lambda = 1e-4;
     config.early_stopping_patience = 5;
-    config.checkpoint_path = "best_housing_model.bin";
-    config.history_path = "training_history.csv";
+    config.checkpoint_path = "models/best_housing_model.bin";
+    config.history_path = "processed/training_history.csv";
 
     train(&net, &train_ds, &test_ds, config);
 
     printf("\nLoading best checkpoint...\n");
-    network_load(&net, "best_housing_model.bin");
+    network_load(&net, "models/best_housing_model.bin");
 
     printf("\nEvaluating best model...\n");
 
