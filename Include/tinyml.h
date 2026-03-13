@@ -2,6 +2,7 @@
 #define TINYML_H
 
 #define MAX_LAYERS 32
+#define MAX_PATH_LEN 256
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -71,11 +72,9 @@ typedef struct {
     Tensor z;
     Tensor output;
 
-    /* batch gradient buffers */
     Tensor grad_weights;
     Tensor grad_bias;
 
-    /* Adam moment buffers */
     Tensor m_weights;
     Tensor v_weights;
     Tensor m_bias;
@@ -270,7 +269,6 @@ void dataset_fit_normalization(Dataset *ds,
 void dataset_apply_normalization(Dataset *ds,
                                  NormalizationStats *stats);
 
-/* backward-compatible helper: fit + apply in one call */
 void dataset_normalize(Dataset *ds);
 
 void normalize_input(double *raw_input,
@@ -348,5 +346,41 @@ void train(NeuralNetwork *net,
            Dataset *train_dataset,
            Dataset *val_dataset,
            TrainingConfig config);
+
+/*
+================================================
+EXPERIMENT CONFIG
+================================================
+*/
+
+typedef struct {
+    char dataset_path[MAX_PATH_LEN];
+    int num_samples;
+    int num_features;
+    double train_ratio;
+
+    int hidden_layers[MAX_LAYERS];
+    int num_hidden_layers;
+
+    int epochs;
+    int batch_size;
+    double learning_rate;
+    double l2_lambda;
+    int early_stopping_patience;
+
+    char checkpoint_path[MAX_PATH_LEN];
+    char history_path[MAX_PATH_LEN];
+    char model_path[MAX_PATH_LEN];
+    char stats_path[MAX_PATH_LEN];
+} ExperimentConfig;
+
+/*
+------------------------------------
+Experiment Config API
+------------------------------------
+*/
+
+void experiment_config_init(ExperimentConfig *cfg);
+int experiment_config_load(const char *filename, ExperimentConfig *cfg);
 
 #endif
