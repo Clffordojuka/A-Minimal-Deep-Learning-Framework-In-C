@@ -4,7 +4,7 @@
 int main()
 {
     Dataset full =
-        dataset_load_csv("raw/data/housing.csv",
+        dataset_load_csv("data/raw/housing.csv",
                          20640,
                          8);
 
